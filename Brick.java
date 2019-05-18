@@ -5,17 +5,19 @@ import javax.swing.*;
 public class Brick extends GameObject {
 
     private int hp;
+    private int bonus;
 
-    public Brick(int x, int y, int hp) {
+    public Brick(int x, int y, int hp, int bonus) {
 
-        initBrick(x,y,hp);
+        initBrick(x,y,hp,bonus);
     }
 
-    public void initBrick(int x, int y, int hp) {
+    private void initBrick(int x, int y, int hp, int bonus) {
 
         this.x = x;
         this.y = y;
         this.hp = hp;
+        this.bonus = bonus;
 
         loadImage();
         getImageDimensions();
@@ -40,12 +42,22 @@ public class Brick extends GameObject {
         else return false;
     }
 
-    public void setDestroyed(boolean value) {
+    public void setDestroyed() {
         hp-=1;
+        loadImage();
     }
 
     public int getHp() {
         return hp;
     }
+
+    public int getBonus() {
+        return bonus;
+    }
+
+    public void setBonus(int bonus) {
+        this.bonus = bonus;
+    }
+
 
 }

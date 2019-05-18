@@ -8,10 +8,7 @@ import java.util.ArrayList;
 import javax.swing.*;
 
 import proz.project.controller.Controller;
-import proz.project.model.Ball;
-import proz.project.model.Board;
-import proz.project.model.Brick;
-import proz.project.model.Paddle;
+import proz.project.model.*;
 
 public class SwingView extends JPanel implements View {
     //private static final long serialVersionUID = -7729510720848698723L;
@@ -41,11 +38,15 @@ public class SwingView extends JPanel implements View {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+                int code = e.getKeyCode();
+                if (code == KeyEvent.VK_LEFT) {
                     controller.moveLeft();
                 }
-                if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                if (code == KeyEvent.VK_RIGHT) {
                     controller.moveRight();
+                }
+                if (code == KeyEvent.VK_SPACE) {
+                    controller.shoot();
                 }
             }
         };
@@ -57,6 +58,8 @@ public class SwingView extends JPanel implements View {
         fillBackground(g);
         paintBall(g);
         paintBricks(g);
+        paintBonuses(g);
+        paintMissiles(g);
         paintPaddle(g);
     }
 
@@ -70,6 +73,30 @@ public class SwingView extends JPanel implements View {
                         bricks.get(i).getImageHeight(), this);
             }
         }
+    }
+
+    private void paintBonuses(Graphics2D g) {
+        ArrayList<Bonus> bonuses = board.getBonus();
+        for(int i=0; i<bonuses.size();i++) {
+            if(bonuses.get(i).getVisible()) {
+                g.drawImage(bonuses.get(i).getImage(), bonuses.get(i).getX(),
+                        bonuses.get(i).getY(),bonuses.get(i).getImageWidth(),
+                        bonuses.get(i).getImageHeight(), this);
+            }
+        }
+        controller.moveBonus();
+    }
+
+    private void paintMissiles(Graphics2D g) {
+        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
+        for(int i=0; i<missiles.size();i++) {
+            if(missiles.get(i).getVisible()) {
+                g.drawImage(missiles.get(i).getImage(), missiles.get(i).getX(),
+                        missiles.get(i).getY(),missiles.get(i).getImageWidth(),
+                        missiles.get(i).getImageHeight(), this);
+            }
+        }
+        controller.moveMissile();
     }
 
     private void paintPaddle(Graphics2D g) {
