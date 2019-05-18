@@ -3,10 +3,7 @@ package proz.project.controller;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-import proz.project.model.Ball;
-import proz.project.model.Board;
-import proz.project.model.Brick;
-import proz.project.model.Paddle;
+import proz.project.model.*;
 import proz.project.view.View;
 
 import java.util.ArrayList;
@@ -49,6 +46,33 @@ public class Controller {
         view.updateView();
     }
 
+    public void shoot() {
+        if(paddle.getAmmo() > 0) {
+        ArrayList<Missile> missiles = paddle.getMissiles();
+        for(int i = 0; i< missiles.size(); i++) {
+            if(missiles.get(i).getVisible()!= true) {
+                missiles.get(i).setVisible(true);
+                missiles.get(i).setX(paddle.getX()+paddle.getImageWidth()/2);
+                missiles.get(i).setY(paddle.getY());
+                moveMissile();
+                paddle.reduceAmmo();
+                //missiles.remove(i);
+                break;
+            }
+        }
+        }
+    }
+
+    public void moveMissile() {
+        ArrayList<Missile> missiles = paddle.getMissiles();
+        for(int i = 0; i<missiles.size(); i++) {
+            if(missiles.get(i).getVisible()) {
+                missiles.get(i).setY(missiles.get(i).getY() - 1);
+            }
+
+        }
+    }
+
     public void moveBall() {
         Ball b = board.getBall();
         b.setX(b.getX()+b.getxDir());
@@ -59,6 +83,16 @@ public class Controller {
             b.setxDir(-1);
         if(b.getY() < 0)
             b.setyDir(1);
+    }
+
+    public void moveBonus() {
+        ArrayList<Bonus> bonuses = board.getBonus();
+        for(int i = 0; i<bonuses.size(); i++) {
+            if(bonuses.get(i).getVisible()) {
+                bonuses.get(i).setY(bonuses.get(i).getY() + 1);
+            }
+
+        }
     }
 
     private void checkRightBorder() {
@@ -158,19 +192,50 @@ public class Controller {
                           ball.setyDir(-1 * ball.getyDir());
 
                       else {
-                          if((ballLeft <= brickRight && ballLeft >= brickRight - 1) || (ballRight >= brickLeft && ballRight <= brickLeft + 1) )
+                          if(ballLeft <= brickRight && ballLeft >= brickRight - 1)
+                              ball.setxDir(1);
+                              else if(ballRight >= brickLeft && ballRight <= brickLeft + 1)
+                                ball.setxDir(-1);
+                          else if(ballTop <= brickBottom && ballTop >= brickBottom -1)
+                              ball.setyDir(1);
+                              else if (ballBottom >= brickTop && ballBottom <= brickTop +1)
+                          ball.setyDir(-1);}
 
-                          ball.setxDir(-1 * ball.getxDir());
-                          else if((ballTop <= brickBottom && ballTop >= brickBottom -1) || (ballBottom >= brickTop && ballBottom <= brickTop +1) )
-                          ball.setyDir(-1 * ball.getyDir());}
 
 
-
-                      bricks.get(i).initBrick(bricks.get(i).getX(), bricks.get(i).getY(), bricks.get(i).getHp()-1);
+                      //bricks.get(i).initBrick(bricks.get(i).getX(), bricks.get(i).getY(), bricks.get(i).getHp()-1,bricks.get(i).getBonus());
+                    bricks.get(i).setDestroyed();
+                      if(bricks.get(i).isDestroyed() && bricks.get(i).getBonus()==1) {
+                          board.getBonus().get(i).setVisible(true);
+                      }
                 }
 
 
 
+            }
+        }
+
+        ArrayList<Bonus> bonuses = board.getBonus();
+
+        for(int i = 0; i< bonuses.size(); i++) {
+            if(bonuses.get(i).getVisible() && bonuses.get(i).getRect().intersects(paddle.getRect()) ) {
+                if(bonuses.get(i).getType() == 1)
+                    paddle.setSize();
+                else
+                    paddle.addAmmo();
+                bonuses.get(i).setVisible(false);
+            }
+        }
+
+        ArrayList<Missile> missiles = paddle.getMissiles();
+
+        for(int i = 0; i<missiles.size(); i++) {
+            for(int j = 0; j<bricks.size(); j++) {
+                if(!bricks.get(j).isDestroyed() && missiles.get(i).getVisible() && missiles.get(i).getRect().intersects(bricks.get(j).getRect())) {
+                    bricks.get(j).setDestroyed();
+                    missiles.get(i).setVisible(false);
+                    //missiles.remove(i);
+                }
             }
         }
     }
