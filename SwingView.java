@@ -11,19 +11,24 @@ import proz.project.controller.Controller;
 import proz.project.model.*;
 
 public class SwingView extends JPanel implements View {
-    //private static final long serialVersionUID = -7729510720848698723L;
+    private static final long serialVersionUID = -7729510720848698723L;
 
     private Board board;
     private Controller controller;
     private Image imgBackground;
 
     public SwingView() {
-        setSize(800, 600);
         addKeyListener(createKeyListener());
         setFocusable(true);
         ImageIcon img = new ImageIcon("images/background.png");
         imgBackground = img.getImage();
     }
+
+    /*@Override
+    public Dimension getPreferredSize() {
+        return new Dimension(800, 600);
+    }*/
+
 
     private KeyListener createKeyListener(){
         return new KeyListener() {
@@ -58,10 +63,25 @@ public class SwingView extends JPanel implements View {
         paintBonuses(g);
         paintMissiles(g);
         paintPaddle(g);
-        Font font = new Font("Helvetica", Font.PLAIN, 26);
+
+        if(controller.getGameOver()) {
+            gameOverMenu(g);
+        }
+        else {
+            Font font = new Font("Helvetica", Font.PLAIN, 26);
+            g.setFont(font);
+            g.setPaint(Color.white);
+            g.drawString("Ammo: " + board.getPaddle().getAmmo(), 10, 550);
+        }
+    }
+
+    private void gameOverMenu(Graphics2D g) {
+        fillBackground(g);
+        Font font = new Font("Helvetica", Font.PLAIN, 46);
         g.setFont(font);
         g.setPaint(Color.white);
-        g.drawString("Ammo: "+ board.getPaddle().getAmmo(),10,550);
+        g.drawString(controller.getMsg(),280,250);
+
     }
 
     private void paintBricks(Graphics2D g) {
@@ -128,6 +148,10 @@ public class SwingView extends JPanel implements View {
     @Override
     public void setController(Controller c) {
         this.controller = c;
+    }
+
+    public int getHight() {
+        return imgBackground.getHeight(null);
     }
 
 }

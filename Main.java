@@ -1,10 +1,15 @@
 package proz.project;
 
-import javax.swing.JFrame;
+import javax.swing.*;
 
 import proz.project.controller.Controller;
 import proz.project.model.Board;
+import proz.project.model.GameMainMenu;
 import proz.project.view.SwingView;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class Main {
 
@@ -27,17 +32,60 @@ public class Main {
     }
 
     private static void createAndShowGUI() {
-        JFrame frame = new JFrame("Brick Breaker");
+        JFrame frame = new JFrame("Brick Breaker") {
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(800, 600);
+            }
+        };
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        frame.setSize(frame.getPreferredSize());
+        frame.setResizable(false);
+        createMainMenu(frame);
+        frame.setVisible(true);
+    }
+
+    private static void startGame(JFrame frame) {
+        frame.getContentPane().removeAll();
         SwingView v = createModelViewController();
         frame.getContentPane().add(v);
-
-        frame.setSize(v.getSize());
-        frame.setResizable(false);
-        frame.setVisible(true);
-
+        frame.pack();
         v.requestFocus();
+    }
+
+
+
+    private static void createMainMenu(JFrame frame) {
+        GameMainMenu mainMenu = new GameMainMenu();
+        mainMenu.setLayout(null);
+
+        JButton newGameButton = new JButton("New game");
+        newGameButton.setActionCommand("New game");
+        newGameButton.setBounds(frame.getWidth() / 2 - 150, frame.getHeight()/5, 300, frame.getHeight()/10);
+        mainMenu.add(newGameButton);
+
+        JButton exitButton = new JButton("Exit");
+        exitButton.setActionCommand("Exit");
+        exitButton.setBounds(frame.getWidth() / 2 - 150, frame.getHeight()*3/5, 300, frame.getHeight()/10);
+        mainMenu.add(exitButton);
+
+        ActionListener mainMenuListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if ("New game".equals(e.getActionCommand())) {
+                    startGame(frame);
+                }
+                if ("Exit".equals(e.getActionCommand())) {
+                    System.exit(0);
+                }
+            }
+        };
+
+        newGameButton.addActionListener(mainMenuListener);
+        exitButton.addActionListener(mainMenuListener);
+        frame.add(mainMenu);
+
     }
 
     public static void main(String[] args) {

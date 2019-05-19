@@ -16,10 +16,10 @@ public class Paddle extends GameObject{
 
     private void initPaddle() {
         missiles = new ArrayList<>();
+        size = 0;
         loadImage();
         getImageDimensions();
         resetState();
-        size = 0;
         ammo = 0;
     }
 

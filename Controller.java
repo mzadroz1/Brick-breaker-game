@@ -17,6 +17,8 @@ public class Controller {
     private Board board;
     private Timer timer;
     private View view;
+    private boolean gameOver;
+    private String msg;
 
     private static final int MOVE_DELTA = 3;
 
@@ -30,6 +32,8 @@ public class Controller {
         timer.scheduleAtFixedRate(new ScheduleTask(),
                 INITIAL_DELAY, PERIOD_INTERVAL);
         pressedKeys = new HashMap<>();
+        gameOver = false;
+        msg = "Game Over";
     }
 
     public void setView(View v) {
@@ -294,12 +298,15 @@ public class Controller {
         for(int i = 0; i < bricks.size(); i++) {
             if(bricks.get(i).isDestroyed()) destroyedCount++;
         }
-        if(destroyedCount == bricks.size())
+        if(destroyedCount == bricks.size()) {
+            msg = "Victory!";
+            gameOver = true;
             stopGame();
-
+        }
 
         Ball ball = board.getBall();
         if (ball.getRect().getMinY() >= board.getPaddle().getRect().getMaxY()) {
+            gameOver = true;
             stopGame();
         }
     }
@@ -320,5 +327,13 @@ public class Controller {
             }
             view.updateView();
         }
+    }
+
+    public boolean getGameOver() {
+        return gameOver;
+    }
+
+    public String getMsg() {
+        return msg;
     }
 }
