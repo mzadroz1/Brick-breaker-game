@@ -6,56 +6,58 @@ import java.awt.event.KeyEvent;
 import proz.project.model.*;
 import proz.project.view.View;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class Controller {
 
     private Board board;
-    private Paddle paddle;
     private Timer timer;
     private View view;
 
-    public static final int MOVE_DELTA = 10;
-    private final int INITIAL_DELAY = 500;
-    private final int PERIOD_INTERVAL = 6;
+    private static final int MOVE_DELTA = 3;
 
+    public final HashMap<Integer, Timestamp> pressedKeys;
 
     public Controller(Board b) {
         board = b;
-        paddle = board.getPaddle();
         timer = new Timer();
+        final int INITIAL_DELAY = 500;
+        final int PERIOD_INTERVAL = 6;
         timer.scheduleAtFixedRate(new ScheduleTask(),
                 INITIAL_DELAY, PERIOD_INTERVAL);
+        pressedKeys = new HashMap<>();
     }
 
     public void setView(View v) {
         this.view = v;
     }
 
-    public void moveLeft() {
-        paddle.x -= MOVE_DELTA;
+    private void moveLeft() {
+        board.getPaddle().setX(board.getPaddle().getX()-MOVE_DELTA);
         checkLeftBorder();
-        view.updateView();
+        //view.updateView();
     }
 
-    public void moveRight() {
-        paddle.x += MOVE_DELTA;
+    private void moveRight() {
+        board.getPaddle().setX(board.getPaddle().getX()+MOVE_DELTA);
         checkRightBorder();
-        view.updateView();
+        //view.updateView();
     }
 
     public void shoot() {
-        if(paddle.getAmmo() > 0) {
-        ArrayList<Missile> missiles = paddle.getMissiles();
+        if(board.getPaddle().getAmmo() > 0) {
+        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
         for(int i = 0; i< missiles.size(); i++) {
-            if(missiles.get(i).getVisible()!= true) {
+            if(!missiles.get(i).getVisible()) {
                 missiles.get(i).setVisible(true);
-                missiles.get(i).setX(paddle.getX()+paddle.getImageWidth()/2);
-                missiles.get(i).setY(paddle.getY());
+                missiles.get(i).setX(board.getPaddle().getX()+board.getPaddle().getImageWidth()/2 - missiles.get(i).getImageWidth()/2);
+                missiles.get(i).setY(board.getPaddle().getY());
                 moveMissile();
-                paddle.reduceAmmo();
+                board.getPaddle().reduceAmmo();
                 //missiles.remove(i);
                 break;
             }
@@ -63,8 +65,39 @@ public class Controller {
         }
     }
 
+    private void keyIterator(){
+        for(Integer keyCode : pressedKeys.keySet()){
+            if (keyCode == KeyEvent.VK_LEFT) {
+                if(pressedKeys.containsKey(KeyEvent.VK_RIGHT)) {
+                    if(pressedKeys.get(keyCode).after(pressedKeys.get(KeyEvent.VK_RIGHT))) {
+                        moveLeft();
+                    }
+                }
+                else{
+                    moveLeft();
+                }
+            }
+            if (keyCode == KeyEvent.VK_RIGHT) {
+                if(pressedKeys.containsKey(KeyEvent.VK_LEFT)) {
+                    if (pressedKeys.get(keyCode).after(pressedKeys.get(KeyEvent.VK_LEFT))) {
+                        moveRight();
+                    }
+                }
+                else{
+                    moveRight();
+                }
+            }
+
+            /*if (keyCode == KeyEvent.VK_SPACE) {
+                shoot();
+            }*/
+
+        }
+    }
+
+
     public void moveMissile() {
-        ArrayList<Missile> missiles = paddle.getMissiles();
+        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
         for(int i = 0; i<missiles.size(); i++) {
             if(missiles.get(i).getVisible()) {
                 missiles.get(i).setY(missiles.get(i).getY() - 1);
@@ -96,15 +129,15 @@ public class Controller {
     }
 
     private void checkRightBorder() {
-        final int lastPossibleX = view.getWidth() - paddle.getImageWidth();
-        if (paddle.x >= lastPossibleX) {
-            paddle.x = lastPossibleX;
+        final int lastPossibleX = view.getWidth() - board.getPaddle().getImageWidth();
+        if (board.getPaddle().getX() >= lastPossibleX) {
+            board.getPaddle().setX(lastPossibleX);
         }
     }
 
     private void checkLeftBorder() {
-        if (paddle.x < 0) {
-            paddle.x = 0;
+        if (board.getPaddle().getX() < 0) {
+            board.getPaddle().setX(0);
         }
     }
 
@@ -112,22 +145,15 @@ public class Controller {
         timer.cancel();
     }
 
-    private void checkCollision() {
-
+    private void paddleCollision() {
 
         Ball ball = board.getBall();
 
+        if ((ball.getRect()).intersects(board.getPaddle().getRect())) {
 
-        if (ball.getRect().getMaxY() >= 550) {
-            stopGame();
-        }
-
-
-        if ((ball.getRect()).intersects(paddle.getRect())) {
-
-            int paddleLPos = (int) paddle.getRect().getMinX();
+            int paddleLPos = (int) board.getPaddle().getRect().getMinX();
             int ballLPos = (int) (ball.getRect().getMinX() + ball.getImageWidth()/2);
-            int piece = (int) (paddle.getImageWidth() * 0.2);
+            int piece = (int) (board.getPaddle().getImageWidth() * 0.2);
 
             int first = paddleLPos + piece;
             int second = paddleLPos + piece*2;
@@ -157,17 +183,12 @@ public class Controller {
                 ball.setyDir(-1);
             }
         }
+    }
 
+    private void bricksCollision() {
 
-
+        Ball ball = board.getBall();
         ArrayList<Brick> bricks = board.getBricks();
-        int destroyedCount = 0;
-        for(int i = 0; i < bricks.size(); i++) {
-            if(bricks.get(i).isDestroyed()) destroyedCount++;
-        }
-        if(destroyedCount == bricks.size())
-            stopGame();
-
 
         for (int i = 0; i < bricks.size(); i++) {
 
@@ -179,35 +200,34 @@ public class Controller {
             int ballLeft = (int) ball.getRect().getMinX() ;
             int ballBottom = (int) ball.getRect().getMaxY();
             int ballTop = (int) ball.getRect().getMinY();
-            int ballX = (int) ball.getRect().getMaxX() - ball.getImageWidth()/2;
-            int ballY = (int) ball.getRect().getMaxY() - ball.getImageHeight()/2;
-            //int ballXdir = ball.getxDir();
-            //int ballYdir = ball.getY()
 
-           if ((ball.getRect()).intersects(bricks.get(i).getRect())) {
+
+            if ((ball.getRect()).intersects(bricks.get(i).getRect())) {
 
                 if(!bricks.get(i).isDestroyed()) {
 
-                      if(ball.getxDir() == 0)
-                          ball.setyDir(-1 * ball.getyDir());
+                    if(ball.getxDir() == 0)
+                        ball.setyDir(-1 * ball.getyDir());
 
-                      else {
-                          if(ballLeft <= brickRight && ballLeft >= brickRight - 1)
-                              ball.setxDir(1);
-                              else if(ballRight >= brickLeft && ballRight <= brickLeft + 1)
-                                ball.setxDir(-1);
-                          else if(ballTop <= brickBottom && ballTop >= brickBottom -1)
-                              ball.setyDir(1);
-                              else if (ballBottom >= brickTop && ballBottom <= brickTop +1)
-                          ball.setyDir(-1);}
+                    else {
+                        if(ballLeft <= brickRight && ballLeft >= brickRight - 1)
+                            ball.setxDir(1);
+                        else if(ballRight >= brickLeft && ballRight <= brickLeft + 1)
+                            ball.setxDir(-1);
+                        else if(ballTop <= brickBottom && ballTop >= brickBottom -1)
+                            ball.setyDir(1);
+                        else if (ballBottom >= brickTop && ballBottom <= brickTop +1)
+                            ball.setyDir(-1);}
 
 
 
-                      //bricks.get(i).initBrick(bricks.get(i).getX(), bricks.get(i).getY(), bricks.get(i).getHp()-1,bricks.get(i).getBonus());
+                    //bricks.get(i).initBrick(bricks.get(i).getX(), bricks.get(i).getY(), bricks.get(i).getHp()-1,bricks.get(i).getBonus());
                     bricks.get(i).setDestroyed();
-                      if(bricks.get(i).isDestroyed() && bricks.get(i).getBonus()==1) {
-                          board.getBonus().get(i).setVisible(true);
-                      }
+                    if(bricks.get(i).isDestroyed() && bricks.get(i).getBonus()==1) {
+                        if(board.getBonus().get(i).getType()==1 && board.getPaddle().getSize()==2)
+                            continue;
+                        board.getBonus().get(i).setVisible(true);
+                    }
                 }
 
 
@@ -215,19 +235,12 @@ public class Controller {
             }
         }
 
-        ArrayList<Bonus> bonuses = board.getBonus();
+    }
 
-        for(int i = 0; i< bonuses.size(); i++) {
-            if(bonuses.get(i).getVisible() && bonuses.get(i).getRect().intersects(paddle.getRect()) ) {
-                if(bonuses.get(i).getType() == 1)
-                    paddle.setSize();
-                else
-                    paddle.addAmmo();
-                bonuses.get(i).setVisible(false);
-            }
-        }
+    private void missilesCollision() {
 
-        ArrayList<Missile> missiles = paddle.getMissiles();
+        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
+        ArrayList<Brick> bricks = board.getBricks();
 
         for(int i = 0; i<missiles.size(); i++) {
             for(int j = 0; j<bricks.size(); j++) {
@@ -235,8 +248,59 @@ public class Controller {
                     bricks.get(j).setDestroyed();
                     missiles.get(i).setVisible(false);
                     //missiles.remove(i);
+                    if(bricks.get(j).isDestroyed() && bricks.get(j).getBonus()==1) {
+                        if(board.getBonus().get(j).getType()==1 && board.getPaddle().getSize()==2)
+                            continue;
+                        board.getBonus().get(j).setVisible(true);
+                    }
                 }
             }
+        }
+
+    }
+
+    private void bonusesCollision() {
+
+        ArrayList<Bonus> bonuses = board.getBonus();
+
+        for(int i = 0; i< bonuses.size(); i++) {
+            if(bonuses.get(i).getVisible() && bonuses.get(i).getRect().intersects(board.getPaddle().getRect()) ) {
+                if(bonuses.get(i).getType() == 1)
+                    board.getPaddle().setSize();
+                else
+                    board.getPaddle().addAmmo();
+                bonuses.get(i).setVisible(false);
+            }
+        }
+
+    }
+
+    private void checkCollision() {
+
+        paddleCollision();
+
+        bricksCollision();
+
+        bonusesCollision();
+
+        missilesCollision();
+
+    }
+
+    private void isGameOver() {
+
+        ArrayList<Brick> bricks = board.getBricks();
+        int destroyedCount = 0;
+        for(int i = 0; i < bricks.size(); i++) {
+            if(bricks.get(i).isDestroyed()) destroyedCount++;
+        }
+        if(destroyedCount == bricks.size())
+            stopGame();
+
+
+        Ball ball = board.getBall();
+        if (ball.getRect().getMinY() >= board.getPaddle().getRect().getMaxY()) {
+            stopGame();
         }
     }
 
@@ -248,6 +312,12 @@ public class Controller {
         public void run() {
 
             checkCollision();
+            isGameOver();
+            try{
+                keyIterator();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             view.updateView();
         }
     }

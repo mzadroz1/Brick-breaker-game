@@ -14,8 +14,8 @@ public class Brick extends GameObject {
 
     private void initBrick(int x, int y, int hp, int bonus) {
 
-        this.x = x;
-        this.y = y;
+        setX(x);
+        setY(y);
         this.hp = hp;
         this.bonus = bonus;
 
@@ -26,20 +26,18 @@ public class Brick extends GameObject {
     private void loadImage(){
         if(hp==1) {
         ImageIcon img = new ImageIcon("images/brick.png");
-        image = img.getImage(); }
+        setImage(img.getImage()); }
         if(hp==2) {
             ImageIcon img = new ImageIcon("images/brick2.png");
-            image = img.getImage(); }
+            setImage(img.getImage()); }
         if(hp==3) {
             ImageIcon img = new ImageIcon("images/brick3.png");
-            image = img.getImage(); }
+            setImage(img.getImage()); }
 
     }
 
     public boolean isDestroyed() {
-        if(hp==0)
-        return true;
-        else return false;
+        return hp == 0;
     }
 
     public void setDestroyed() {

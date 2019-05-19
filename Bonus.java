@@ -15,8 +15,8 @@ public class Bonus extends GameObject {
 
 
     private void initBonus(int x, int y, boolean visible, int type) {
-        this.x = x;
-        this.y = y;
+        setX(x);
+        setY(y);
         this.visible = visible;
         this.type = type;
         loadImage();
@@ -27,10 +27,10 @@ public class Bonus extends GameObject {
     private void loadImage(){
         if(type == 1) {
             ImageIcon img = new ImageIcon("images/expand.png");
-            image = img.getImage(); }
+            setImage(img.getImage()); }
         if(type == 2) {
             ImageIcon img = new ImageIcon("images/ammo.png");
-            image = img.getImage(); }
+            setImage(img.getImage()); }
 
     }
 

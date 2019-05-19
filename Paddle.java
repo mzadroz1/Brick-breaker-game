@@ -19,28 +19,37 @@ public class Paddle extends GameObject{
         loadImage();
         getImageDimensions();
         resetState();
+        size = 0;
         ammo = 0;
     }
 
     private void loadImage(){
-        if(size == 1) {
-            ImageIcon img = new ImageIcon("images/paddle2.png");
-            image = img.getImage();
+        if(size == 0) {
+            ImageIcon img = new ImageIcon("images/paddle.png");
+            setImage(img.getImage());
         }
-        else {
+        else if(size == 1) {
             ImageIcon img = new ImageIcon("images/paddle1.png");
-            image = img.getImage();
+            setImage(img.getImage());
+        }
+        else  if(size == 2) {
+            ImageIcon img = new ImageIcon("images/paddle2.png");
+            setImage(img.getImage());
         }
 
+    }
+
+    public int getSize() {
+        return size;
     }
 
     private void resetState() {
-        x = 400;
-        y = 500;
+        setX(400);
+        setY(500);
     }
 
     public void setSize() {
-        this.size = 1;
+        this.size += 1;
         loadImage();
         getImageDimensions();
     }
@@ -54,7 +63,7 @@ public class Paddle extends GameObject{
     }
 
     public void addAmmo() {
-        int mX = this.x + this.getImageWidth()/2;
+        int mX = this.getX() + this.getImageWidth()/2;
         this.ammo += 5;
         for(int i =0; i<5; i++)
             this.missiles.add(new Missile(mX,this.getY(),false));

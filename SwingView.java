@@ -6,7 +6,7 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.*;
-
+import java.sql.Timestamp;
 import proz.project.controller.Controller;
 import proz.project.model.*;
 
@@ -25,32 +25,29 @@ public class SwingView extends JPanel implements View {
         imgBackground = img.getImage();
     }
 
-    private KeyListener createKeyListener() {
+    private KeyListener createKeyListener(){
         return new KeyListener() {
-
             @Override
             public void keyTyped(KeyEvent e) {
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
+                Integer keyCode = e.getKeyCode();
+                controller.pressedKeys.remove(keyCode);
             }
 
             @Override
             public void keyPressed(KeyEvent e) {
-                int code = e.getKeyCode();
-                if (code == KeyEvent.VK_LEFT) {
-                    controller.moveLeft();
-                }
-                if (code == KeyEvent.VK_RIGHT) {
-                    controller.moveRight();
-                }
-                if (code == KeyEvent.VK_SPACE) {
+                if(e.getKeyCode() == KeyEvent.VK_SPACE)
                     controller.shoot();
-                }
+                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                Integer keyCode = e.getKeyCode();
+                controller.pressedKeys.put(keyCode, timestamp);
             }
         };
     }
+
 
     @Override
     protected void paintComponent(Graphics g1) {
@@ -61,6 +58,10 @@ public class SwingView extends JPanel implements View {
         paintBonuses(g);
         paintMissiles(g);
         paintPaddle(g);
+        Font font = new Font("Helvetica", Font.PLAIN, 26);
+        g.setFont(font);
+        g.setPaint(Color.white);
+        g.drawString("Ammo: "+ board.getPaddle().getAmmo(),10,550);
     }
 
     private void paintBricks(Graphics2D g) {

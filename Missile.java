@@ -12,8 +12,8 @@ public class Missile extends GameObject {
     }
 
     private void initMissile(int x, int y, boolean visible) {
-        this.x = x;
-        this.y = y;
+        setX(x);
+        setY(y);
         this.visible = visible;
         loadImage();
         getImageDimensions();
@@ -22,7 +22,7 @@ public class Missile extends GameObject {
 
     private void loadImage(){
         ImageIcon img = new ImageIcon("images/missile.png");
-        image = img.getImage();
+        setImage(img.getImage());
     }
 
     public void setVisible(boolean value) {

@@ -39,12 +39,12 @@ public class Ball extends GameObject {
 
     private void loadImage() {
         ImageIcon img = new ImageIcon("images/ball.png");
-        image = img.getImage();
+        setImage(img.getImage());
     }
 
     private void resetState() {
-        x = 200;
-        y = 300;
+        setX(200);
+        setY(300);
     }
 
 

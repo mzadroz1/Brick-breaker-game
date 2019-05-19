@@ -4,11 +4,11 @@ import java.awt.*;
 
 public class GameObject {
 
-    public int x;
-    public int y;
-    public int imageWidth;
-    public int imageHeight;
-    public Image image;
+    private int x;
+    private int y;
+    private int imageWidth;
+    private int imageHeight;
+    private Image image;
 
     public void setX(int x) {
         this.x = x;
@@ -34,6 +34,10 @@ public class GameObject {
         return imageHeight;
     }
 
+    void setImage(Image image) {
+        this.image = image;
+    }
+
     public Image getImage() {
         return image;
     }
@@ -43,7 +47,7 @@ public class GameObject {
                 image.getWidth(null), image.getHeight(null));
     }
 
-    public void getImageDimensions() {
+    void getImageDimensions() {
 
         imageWidth = image.getWidth(null);
         imageHeight = image.getHeight(null);
