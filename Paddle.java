@@ -49,9 +49,10 @@ public class Paddle extends GameObject{
     }
 
     public void setSize() {
+        if(size!=2) {
         this.size += 1;
         loadImage();
-        getImageDimensions();
+        getImageDimensions();}
     }
 
     public int getAmmo() {

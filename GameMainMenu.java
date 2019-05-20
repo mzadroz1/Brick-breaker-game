@@ -16,6 +16,9 @@ public class GameMainMenu extends JPanel {
         Image imgBackground;
         imgBackground = img.getImage();
         g.drawImage(imgBackground,0,0,this);
+
+        ImageIcon img1 = new ImageIcon("images/logo.png");
+        g.drawImage(img1.getImage(),400-img1.getImage().getWidth(null)/2,100,this);
     }
 
 

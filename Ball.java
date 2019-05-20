@@ -43,8 +43,8 @@ public class Ball extends GameObject {
     }
 
     private void resetState() {
-        setX(200);
-        setY(300);
+        setX(260);
+        setY(317);
     }
 
 

@@ -1,6 +1,8 @@
 package proz.project.view;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
@@ -46,6 +48,8 @@ public class SwingView extends JPanel implements View {
             public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_SPACE)
                     controller.shoot();
+                if(e.getKeyCode() == KeyEvent.VK_C)
+                    board.getPaddle().addAmmo();
                 Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                 Integer keyCode = e.getKeyCode();
                 controller.pressedKeys.put(keyCode, timestamp);
@@ -72,15 +76,81 @@ public class SwingView extends JPanel implements View {
             g.setFont(font);
             g.setPaint(Color.white);
             g.drawString("Ammo: " + board.getPaddle().getAmmo(), 10, 550);
+
+
         }
     }
 
     private void gameOverMenu(Graphics2D g) {
         fillBackground(g);
-        Font font = new Font("Helvetica", Font.PLAIN, 46);
-        g.setFont(font);
-        g.setPaint(Color.white);
-        g.drawString(controller.getMsg(),280,250);
+
+        if(controller.getMsg().equals("Game Over")) {
+            ImageIcon img = new ImageIcon("images/game-over.png");
+            g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getHight()/10,
+                    img.getImage().getWidth(null),img.getImage().getHeight(null),this);
+        }
+        if(controller.getMsg().equals("Victory!")) {
+            if(board.getLvl() == 3) {
+                ImageIcon img = new ImageIcon("images/you-win.png");
+                g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getHight()/10,
+                        img.getImage().getWidth(null),img.getImage().getHeight(null),this);
+            }
+            else {
+                ImageIcon img = new ImageIcon("images/level-cleared.png");
+                g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getHight()/10,
+                        img.getImage().getWidth(null),img.getImage().getHeight(null),this);
+            }
+
+
+        }
+
+
+        JButton newGameButton = new JButton();
+        if(controller.getMsg().equals("Game Over") || board.getLvl() == 3){
+            newGameButton.setText("New Game");
+            newGameButton.setActionCommand("New game");
+        }
+        else {
+            newGameButton.setText("Next level");
+            newGameButton.setActionCommand("Next level");
+        }
+
+        newGameButton.setBounds(getWidth() / 2 - 150, getHeight()*6/10, 300, getHeight()/10);
+        this.add(newGameButton);
+
+        JButton exitButton = new JButton("Exit");
+        exitButton.setActionCommand("Exit");
+        exitButton.setBounds(getWidth() / 2 - 150, getHeight()*8/10, 300, getHeight()/10);
+        add(exitButton);
+        SwingView v = this;
+
+        ActionListener mainMenuListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if ("New game".equals(e.getActionCommand())) {
+
+                    v.removeAll();
+                    Board b = new Board();
+                    controller.resetController(b);
+                    setModel(b);
+                    controller.setView(v);
+                    v.requestFocus();
+                }
+                if("Next level".equals(e.getActionCommand())) {
+                    v.removeAll();
+                    board.initBoard();
+                    controller.resetController(board);
+                    controller.setView(v);
+                    v.requestFocus();
+                }
+                if ("Exit".equals(e.getActionCommand())) {
+                    System.exit(0);
+                }
+            }
+        };
+
+        newGameButton.addActionListener(mainMenuListener);
+        exitButton.addActionListener(mainMenuListener);
 
     }
 
@@ -148,6 +218,10 @@ public class SwingView extends JPanel implements View {
     @Override
     public void setController(Controller c) {
         this.controller = c;
+    }
+
+    public Controller getController() {
+        return controller;
     }
 
     public int getHight() {

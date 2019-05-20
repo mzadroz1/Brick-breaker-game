@@ -62,12 +62,12 @@ public class Main {
 
         JButton newGameButton = new JButton("New game");
         newGameButton.setActionCommand("New game");
-        newGameButton.setBounds(frame.getWidth() / 2 - 150, frame.getHeight()/5, 300, frame.getHeight()/10);
+        newGameButton.setBounds(frame.getWidth() / 2 - 150, frame.getHeight()*5/10, 300, frame.getHeight()/10);
         mainMenu.add(newGameButton);
 
         JButton exitButton = new JButton("Exit");
         exitButton.setActionCommand("Exit");
-        exitButton.setBounds(frame.getWidth() / 2 - 150, frame.getHeight()*3/5, 300, frame.getHeight()/10);
+        exitButton.setBounds(frame.getWidth() / 2 - 150, frame.getHeight()*7/10, 300, frame.getHeight()/10);
         mainMenu.add(exitButton);
 
         ActionListener mainMenuListener = new ActionListener() {

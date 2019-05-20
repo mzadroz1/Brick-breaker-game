@@ -25,14 +25,18 @@ public class Controller {
     public final HashMap<Integer, Timestamp> pressedKeys;
 
     public Controller(Board b) {
+        resetController(b);
+        pressedKeys = new HashMap<>();
+    }
+
+    public void resetController(Board b) {
         board = b;
+        gameOver = false;
         timer = new Timer();
         final int INITIAL_DELAY = 500;
-        final int PERIOD_INTERVAL = 6;
+        final int PERIOD_INTERVAL = 5;
         timer.scheduleAtFixedRate(new ScheduleTask(),
                 INITIAL_DELAY, PERIOD_INTERVAL);
-        pressedKeys = new HashMap<>();
-        gameOver = false;
         msg = "Game Over";
     }
 
@@ -228,7 +232,7 @@ public class Controller {
                     //bricks.get(i).initBrick(bricks.get(i).getX(), bricks.get(i).getY(), bricks.get(i).getHp()-1,bricks.get(i).getBonus());
                     bricks.get(i).setDestroyed();
                     if(bricks.get(i).isDestroyed() && bricks.get(i).getBonus()==1) {
-                        if(board.getBonus().get(i).getType()==1 && board.getPaddle().getSize()==2)
+                        if(board.getBonus().get(i).getType()==1 && board.getPaddle().getSize()>=2)
                             continue;
                         board.getBonus().get(i).setVisible(true);
                     }
