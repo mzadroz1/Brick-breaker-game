@@ -1,12 +1,10 @@
 package proz.project.controller;
 
-import java.awt.*;
 import java.awt.event.KeyEvent;
 
 import proz.project.model.*;
 import proz.project.view.View;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -18,14 +16,19 @@ public class Controller {
     private Timer timer;
     private View view;
     private boolean gameOver;
-    private String msg;
+    private boolean gameStarted = false;
+    private boolean paused = false;
+    private String msg = "";
 
-    private static final int MOVE_DELTA = 3;
+    static final int MOVE_DELTA = 3;
+    static final int OBJECTS_MOVE_DELTA = 1;
 
-    public final HashMap<Integer, Timestamp> pressedKeys;
+    public HashMap<Integer, Boolean> pressedKeys;
 
     public Controller(Board b) {
-        resetController(b);
+        if(gameStarted) {
+            resetController(b);
+        }
         pressedKeys = new HashMap<>();
     }
 
@@ -33,8 +36,8 @@ public class Controller {
         board = b;
         gameOver = false;
         timer = new Timer();
-        final int INITIAL_DELAY = 500;
-        final int PERIOD_INTERVAL = 5;
+        final int INITIAL_DELAY = 50;
+        final int PERIOD_INTERVAL = 6;
         timer.scheduleAtFixedRate(new ScheduleTask(),
                 INITIAL_DELAY, PERIOD_INTERVAL);
         msg = "Game Over";
@@ -47,17 +50,15 @@ public class Controller {
     private void moveLeft() {
         board.getPaddle().setX(board.getPaddle().getX()-MOVE_DELTA);
         checkLeftBorder();
-        //view.updateView();
     }
 
     private void moveRight() {
         board.getPaddle().setX(board.getPaddle().getX()+MOVE_DELTA);
         checkRightBorder();
-        //view.updateView();
     }
 
-    public void shoot() {
-        if(board.getPaddle().getAmmo() > 0) {
+    private void shoot() {
+        if(board.getPaddle().getAmmo() > 0 && !board.getPaddle().isReloading()) {
         ArrayList<Missile> missiles = board.getPaddle().getMissiles();
         for(int i = 0; i< missiles.size(); i++) {
             if(!missiles.get(i).getVisible()) {
@@ -66,71 +67,87 @@ public class Controller {
                 missiles.get(i).setY(board.getPaddle().getY());
                 moveMissile();
                 board.getPaddle().reduceAmmo();
-                //missiles.remove(i);
                 break;
             }
         }
+        board.getPaddle().setReload(true);
+        timer.schedule(new Reload(),200);
+        }
+
+    }
+
+    private void pauseGame() {
+        setPause(true);
+        //timer.cancel();
+    }
+
+    public void unpauseGame() {
+        setPause(false);
+        pressedKeys.remove(KeyEvent.VK_ESCAPE);
+    }
+
+    private class Reload extends TimerTask {
+        @Override
+        public void run() {
+            board.getPaddle().setReload(false);
         }
     }
 
-    private void keyIterator(){
+    private void keyHandler(){
         for(Integer keyCode : pressedKeys.keySet()){
             if (keyCode == KeyEvent.VK_LEFT) {
-                if(pressedKeys.containsKey(KeyEvent.VK_RIGHT)) {
-                    if(pressedKeys.get(keyCode).after(pressedKeys.get(KeyEvent.VK_RIGHT))) {
-                        moveLeft();
-                    }
-                }
-                else{
+                if(!pressedKeys.containsKey(KeyEvent.VK_RIGHT)) {
+
                     moveLeft();
                 }
             }
             if (keyCode == KeyEvent.VK_RIGHT) {
-                if(pressedKeys.containsKey(KeyEvent.VK_LEFT)) {
-                    if (pressedKeys.get(keyCode).after(pressedKeys.get(KeyEvent.VK_LEFT))) {
-                        moveRight();
-                    }
-                }
-                else{
+                if(!pressedKeys.containsKey(KeyEvent.VK_LEFT)) {
+
                     moveRight();
                 }
             }
 
-            /*if (keyCode == KeyEvent.VK_SPACE) {
+            if (keyCode == KeyEvent.VK_SPACE) {
                 shoot();
-            }*/
+            }
 
-        }
-    }
-
-
-    public void moveMissile() {
-        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
-        for(int i = 0; i<missiles.size(); i++) {
-            if(missiles.get(i).getVisible()) {
-                missiles.get(i).setY(missiles.get(i).getY() - 1);
+            if (keyCode == KeyEvent.VK_ESCAPE) {
+                pauseGame();
             }
 
         }
     }
 
-    public void moveBall() {
+
+    private void moveMissile() {
+        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
+        for(int i = 0; i<missiles.size(); i++) {
+            if(missiles.get(i).getVisible()) {
+                missiles.get(i).setY(missiles.get(i).getY() - OBJECTS_MOVE_DELTA);
+            }
+
+        }
+    }
+
+    private void moveBall() {
         Ball b = board.getBall();
-        b.setX(b.getX()+b.getxDir());
-        b.setY(b.getY() + b.getyDir());
-        if(b.getX() < 0)
+
+        if(b.getX() <= 0)
             b.setxDir(1);
         if(b.getX() >= view.getWidth() - b.getImageWidth())
             b.setxDir(-1);
-        if(b.getY() < 0)
+        if(b.getY() <= 0)
             b.setyDir(1);
+        b.setX(b.getX()+b.getxDir());
+        b.setY(b.getY() + b.getyDir());
     }
 
-    public void moveBonus() {
+    private void moveBonus() {
         ArrayList<Bonus> bonuses = board.getBonus();
         for(int i = 0; i<bonuses.size(); i++) {
             if(bonuses.get(i).getVisible()) {
-                bonuses.get(i).setY(bonuses.get(i).getY() + 1);
+                bonuses.get(i).setY(bonuses.get(i).getY() + OBJECTS_MOVE_DELTA);
             }
 
         }
@@ -170,26 +187,20 @@ public class Controller {
 
             if (ballLPos < first) {
                 ball.setxDir(-1);
-                ball.setyDir(-1);
             }
-
             if (ballLPos >= first && ballLPos < second) {
-                ball.setyDir(-1);
+                //stays the same
             }
-
             if (ballLPos >= second && ballLPos < third) {
                 ball.setxDir(0);
-                ball.setyDir(-1);
             }
-
             if (ballLPos >= third && ballLPos < fourth) {
-                ball.setyDir(-1 );
+                //stays the same
             }
-
             if (ballLPos > fourth) {
                 ball.setxDir(1);
-                ball.setyDir(-1);
             }
+            ball.setyDir(-1);
         }
     }
 
@@ -225,11 +236,9 @@ public class Controller {
                         else if(ballTop <= brickBottom && ballTop >= brickBottom -1)
                             ball.setyDir(1);
                         else if (ballBottom >= brickTop && ballBottom <= brickTop +1)
-                            ball.setyDir(-1);}
+                            ball.setyDir(-1);
+                    }
 
-
-
-                    //bricks.get(i).initBrick(bricks.get(i).getX(), bricks.get(i).getY(), bricks.get(i).getHp()-1,bricks.get(i).getBonus());
                     bricks.get(i).setDestroyed();
                     if(bricks.get(i).isDestroyed() && bricks.get(i).getBonus()==1) {
                         if(board.getBonus().get(i).getType()==1 && board.getPaddle().getSize()>=2)
@@ -237,25 +246,24 @@ public class Controller {
                         board.getBonus().get(i).setVisible(true);
                     }
                 }
-
-
-
             }
         }
-
+        moveBall();
     }
 
     private void missilesCollision() {
+
+        missilesOutOfScreen();
 
         ArrayList<Missile> missiles = board.getPaddle().getMissiles();
         ArrayList<Brick> bricks = board.getBricks();
 
         for(int i = 0; i<missiles.size(); i++) {
             for(int j = 0; j<bricks.size(); j++) {
-                if(!bricks.get(j).isDestroyed() && missiles.get(i).getVisible() && missiles.get(i).getRect().intersects(bricks.get(j).getRect())) {
+                if(missiles.size()!= 0  && i<missiles.size() && !bricks.get(j).isDestroyed() && missiles.get(i).getVisible() && missiles.get(i).getRect().intersects(bricks.get(j).getRect())) {
                     bricks.get(j).setDestroyed();
                     missiles.get(i).setVisible(false);
-                    //missiles.remove(i);
+                    missiles.remove(i);
                     if(bricks.get(j).isDestroyed() && bricks.get(j).getBonus()==1) {
                         if(board.getBonus().get(j).getType()==1 && board.getPaddle().getSize()==2)
                             continue;
@@ -264,7 +272,17 @@ public class Controller {
                 }
             }
         }
+        moveMissile();
+    }
 
+    private void missilesOutOfScreen() {
+        ArrayList<Missile> missiles = board.getPaddle().getMissiles();
+        for(int i = 0; i<missiles.size(); i++) {
+            if (missiles.get(i).getY() == 0) {
+                missiles.get(i).setVisible(false);
+                missiles.remove(i);
+            }
+        }
     }
 
     private void bonusesCollision() {
@@ -280,14 +298,15 @@ public class Controller {
                 bonuses.get(i).setVisible(false);
             }
         }
-
+        moveBonus();
     }
+
 
     private void checkCollision() {
 
-        paddleCollision();
-
         bricksCollision();
+
+        paddleCollision();
 
         bonusesCollision();
 
@@ -315,6 +334,19 @@ public class Controller {
         }
     }
 
+    void updateGame() {
+        if(!isPaused()) {
+            checkCollision();
+
+            isGameOver();
+            try {
+                keyHandler();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        view.updateView();
+    }
 
 
     private class ScheduleTask extends TimerTask {
@@ -322,14 +354,7 @@ public class Controller {
         @Override
         public void run() {
 
-            checkCollision();
-            isGameOver();
-            try{
-                keyIterator();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            view.updateView();
+            updateGame();
         }
     }
 
@@ -339,5 +364,21 @@ public class Controller {
 
     public String getMsg() {
         return msg;
+    }
+
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public void setGameStarted(boolean gameStarted) {
+        this.gameStarted = gameStarted;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    private void setPause(boolean paused) {
+        this.paused = paused;
     }
 }

@@ -7,6 +7,7 @@ public class Paddle extends GameObject{
 
     private int size;
     private int ammo;
+    private boolean reload;
     private ArrayList<Missile> missiles;
 
     public Paddle() {
@@ -21,6 +22,7 @@ public class Paddle extends GameObject{
         getImageDimensions();
         resetState();
         ammo = 0;
+        reload = false;
     }
 
     private void loadImage(){
@@ -73,5 +75,13 @@ public class Paddle extends GameObject{
     public void reduceAmmo() {
         if(ammo!=0)
             ammo-=1;
+    }
+
+    public boolean isReloading() {
+        return reload;
+    }
+
+    public void setReload(boolean reload) {
+        this.reload = reload;
     }
 }

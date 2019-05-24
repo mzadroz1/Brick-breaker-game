@@ -8,7 +8,7 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.*;
-import java.sql.Timestamp;
+
 import proz.project.controller.Controller;
 import proz.project.model.*;
 
@@ -17,19 +17,11 @@ public class SwingView extends JPanel implements View {
 
     private Board board;
     private Controller controller;
-    private Image imgBackground;
 
     public SwingView() {
         addKeyListener(createKeyListener());
         setFocusable(true);
-        ImageIcon img = new ImageIcon("images/background.png");
-        imgBackground = img.getImage();
     }
-
-    /*@Override
-    public Dimension getPreferredSize() {
-        return new Dimension(800, 600);
-    }*/
 
 
     private KeyListener createKeyListener(){
@@ -46,13 +38,12 @@ public class SwingView extends JPanel implements View {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_SPACE)
-                    controller.shoot();
+
                 if(e.getKeyCode() == KeyEvent.VK_C)
                     board.getPaddle().addAmmo();
-                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
                 Integer keyCode = e.getKeyCode();
-                controller.pressedKeys.put(keyCode, timestamp);
+                controller.pressedKeys.put(keyCode, true);
             }
         };
     }
@@ -68,47 +59,84 @@ public class SwingView extends JPanel implements View {
         paintMissiles(g);
         paintPaddle(g);
 
-        if(controller.getGameOver()) {
-            gameOverMenu(g);
+        if(controller.getGameOver() || !controller.isGameStarted() || controller.isPaused()) {
+            paintMenu(g);
         }
         else {
-            Font font = new Font("Helvetica", Font.PLAIN, 26);
-            g.setFont(font);
-            g.setPaint(Color.white);
-            g.drawString("Ammo: " + board.getPaddle().getAmmo(), 10, 550);
-
-
+            paintAmmoAmount(g);
         }
     }
 
-    private void gameOverMenu(Graphics2D g) {
-        fillBackground(g);
+    private void paintMenu(Graphics2D g) {
+        chooseMenu(g);
+        setLayout(null);
+        createButtons();
+    }
 
-        if(controller.getMsg().equals("Game Over")) {
-            ImageIcon img = new ImageIcon("images/game-over.png");
-            g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getHight()/10,
+    private void paintAmmoAmount(Graphics2D g) {
+        Font font = new Font("Helvetica", Font.PLAIN, 26);
+        g.setFont(font);
+        g.setPaint(Color.white);
+        g.drawString("Ammo: " + board.getPaddle().getAmmo(), 10, 550);
+    }
+
+    private void paintEscToContinue(Graphics2D g) {
+        Font font = new Font("Helvetica", Font.PLAIN, 46);
+        g.setFont(font);
+        g.setPaint(Color.white);
+        FontMetrics fm = g.getFontMetrics();
+        String msg = "Press ESC to continue";
+        g.drawString( msg, getWidth()/2 - fm.stringWidth(msg)/2, getHeight()*8/10);
+    }
+
+
+    private void chooseMenu(Graphics2D g) {
+
+        if(!controller.isPaused())
+            fillBackground(g);
+
+        if(!controller.isGameStarted()) {
+            ImageIcon img = new ImageIcon("images/logo.png");
+            g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getImgHeight()*2/10,
                     img.getImage().getWidth(null),img.getImage().getHeight(null),this);
         }
-        if(controller.getMsg().equals("Victory!")) {
+
+        if(controller.isPaused()) {
+            ImageIcon img = new ImageIcon("images/pause.png");
+            g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getImgHeight()/10,
+                    img.getImage().getWidth(null),img.getImage().getHeight(null),this);
+            paintEscToContinue(g);
+        }
+
+        else if(controller.getMsg().equals("Game Over")) {
+            ImageIcon img = new ImageIcon("images/game-over.png");
+            g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getImgHeight()/10,
+                    img.getImage().getWidth(null),img.getImage().getHeight(null),this);
+        }
+        else if(controller.getMsg().equals("Victory!")) {
             if(board.getLvl() == 3) {
                 ImageIcon img = new ImageIcon("images/you-win.png");
-                g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getHight()/10,
+                g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getImgHeight()/10,
                         img.getImage().getWidth(null),img.getImage().getHeight(null),this);
             }
             else {
                 ImageIcon img = new ImageIcon("images/level-cleared.png");
-                g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getHight()/10,
+                g.drawImage(img.getImage(),getWidth()/2 - img.getImage().getWidth(null)/2,getImgHeight()/10,
                         img.getImage().getWidth(null),img.getImage().getHeight(null),this);
             }
-
-
         }
+    }
 
-
+    private void createButtons() {
+        if(controller.isPaused()) {
+            createContinueButton();
+        }
+        else {
         JButton newGameButton = new JButton();
-        if(controller.getMsg().equals("Game Over") || board.getLvl() == 3){
+        if(controller.getMsg().equals("Game Over") || board.getLvl() == 3 || !controller.isGameStarted()){
             newGameButton.setText("New Game");
             newGameButton.setActionCommand("New game");
+
         }
         else {
             newGameButton.setText("Next level");
@@ -131,6 +159,7 @@ public class SwingView extends JPanel implements View {
 
                     v.removeAll();
                     Board b = new Board();
+                    controller.setGameStarted(true);
                     controller.resetController(b);
                     setModel(b);
                     controller.setView(v);
@@ -150,9 +179,35 @@ public class SwingView extends JPanel implements View {
         };
 
         newGameButton.addActionListener(mainMenuListener);
-        exitButton.addActionListener(mainMenuListener);
-
+        exitButton.addActionListener(mainMenuListener);}
     }
+
+    private void createContinueButton() {
+
+       SwingView v = this;
+
+       KeyListener PauseListener = new KeyListener() {
+           @Override
+           public void keyTyped(KeyEvent e) {
+
+           }
+
+           @Override
+           public void keyPressed(KeyEvent e) {
+               if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                   v.removeKeyListener(this);
+                   controller.unpauseGame();
+
+               }
+           }
+           @Override
+           public void keyReleased(KeyEvent e) {
+
+           }
+       };
+       addKeyListener(PauseListener);
+    }
+
 
     private void paintBricks(Graphics2D g) {
 
@@ -175,7 +230,6 @@ public class SwingView extends JPanel implements View {
                         bonuses.get(i).getImageHeight(), this);
             }
         }
-        controller.moveBonus();
     }
 
     private void paintMissiles(Graphics2D g) {
@@ -187,7 +241,6 @@ public class SwingView extends JPanel implements View {
                         missiles.get(i).getImageHeight(), this);
             }
         }
-        controller.moveMissile();
     }
 
     private void paintPaddle(Graphics2D g) {
@@ -198,11 +251,12 @@ public class SwingView extends JPanel implements View {
     private void paintBall(Graphics2D g) {
         Ball b = board.getBall();
         g.drawImage(b.getImage(),b.getX(),b.getY(),this);
-        controller.moveBall();
     }
 
-    private void fillBackground(Graphics2D g) {
-        g.drawImage(imgBackground,0,0,this);
+    private void fillBackground(Graphics2D g)
+    {
+        ImageIcon img = new ImageIcon("images/background.png");
+        g.drawImage(img.getImage(),0,0,this);
     }
 
     @Override
@@ -224,8 +278,9 @@ public class SwingView extends JPanel implements View {
         return controller;
     }
 
-    public int getHight() {
-        return imgBackground.getHeight(null);
+    public int getImgHeight() {
+        ImageIcon img = new ImageIcon("images/background.png");
+        return img.getImage().getHeight(null);
     }
 
 }

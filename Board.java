@@ -17,7 +17,8 @@ public class Board {
     }
 
     public void initBoard() {
-        lvl++;
+        if(lvl<3)
+            lvl++;
         ball = new Ball();
         paddle = new Paddle();
         bricks = new ArrayList<>();
@@ -38,8 +39,8 @@ public class Board {
                         if (j <= 3 || j ==10) hp = 1;
                         else if (j >= 6 && j <= 8) hp = 2;
                         else hp = 3;
-                        bricks.add(new Brick(j * 71, i * 24 + 10, /*(i + j) % 3 +*/ hp, rand.nextInt(2)));
-                        bonus.add(new Bonus(j * 71, i * 24 + 10, false, rand.nextInt(2) + 1));
+                        bricks.add(new Brick(j * 71, i * 24 + 40, /*(i + j) % 3 +*/ hp, rand.nextInt(2)));
+                        bonus.add(new Bonus(j * 71, i * 24 + 40, false, rand.nextInt(2) + 1));
                     }
                 }
             }

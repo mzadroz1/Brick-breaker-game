@@ -41,6 +41,7 @@ public class Brick extends GameObject {
     }
 
     public void setDestroyed() {
+        if(hp!=0)
         hp-=1;
         loadImage();
     }
